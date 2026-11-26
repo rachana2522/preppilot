@@ -168,4 +168,7 @@ const behavioral = [
   'Where do you see yourself in 3–5 years?',
 ];
 
-module.exports = { skills, roles, behavioral };
+const knowledge = { skills, roles, behavioral };
+
+if (typeof module !== 'undefined' && module.exports) module.exports = knowledge;
+if (typeof window !== 'undefined') window.PREP_KNOWLEDGE = knowledge;

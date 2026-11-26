@@ -1,14 +1,46 @@
 const $ = (id) => document.getElementById(id);
 const API_BASE = String(window.PREP_API_BASE || '').replace(/\/+$/, '');
+const API_TIMEOUT = 3000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const list = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
 const chips = (arr, cls = '') => `<div class="chips">${arr.map((x) => `<span class="chip ${cls}">${esc(x)}</span>`).join('') || '<span class="muted">None</span>'}</div>`;
 
-fetch(`${API_BASE}/api/status`).then((r) => r.json()).then(({ ai }) => {
+async function fetchWithTimeout(url, options = {}, timeout = 4000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function showOfflineBadge() {
   const b = $('aiBadge');
-  b.querySelector('b').textContent = ai ? 'AI mode' : 'Offline mode';
-  b.classList.toggle('on', ai);
-}).catch(() => {});
+  b.querySelector('b').textContent = 'Offline mode';
+  b.classList.remove('on');
+}
+
+if (API_BASE) {
+  fetchWithTimeout(`${API_BASE}/api/status`, {}, API_TIMEOUT).then((r) => {
+    if (!r.ok) throw new Error('API unavailable');
+    return r.json();
+  }).then(({ ai }) => {
+    const b = $('aiBadge');
+    b.querySelector('b').textContent = ai ? 'AI mode' : 'Offline mode';
+    b.classList.toggle('on', ai);
+  }).catch(showOfflineBadge);
+} else {
+  showOfflineBadge();
+}
+
+async function analyzeOffline(file, company, role, jd) {
+  const resumeText = (await window.PrepOffline.extractText(file)).replace(/\u0000/g, '').trim();
+  if (resumeText.length < 50) throw new Error('Could not read enough text from this resume. Try a text-based PDF or DOCX.');
+  const data = window.PrepOffline.generate({ resumeText, company, role, jdText: jd });
+  data.ats = window.PrepOffline.checkResume(resumeText, data.match);
+  return data;
+}
 
 const drop = $('drop'), input = $('resume');
 function setFile(f) {
@@ -28,9 +60,31 @@ $('form').addEventListener('submit', async (e) => {
   if (!input.files[0]) { err.textContent = 'Please upload your resume.'; err.hidden = false; return; }
   $('landing').hidden = true; $('loading').hidden = false;
   try {
-    const res = await fetch(`${API_BASE}/api/analyze`, { method: 'POST', body: new FormData(e.target) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
+    const file = input.files[0];
+    const company = $('company').value.trim();
+    const role = $('role').value.trim();
+    const jd = $('jd').value.trim();
+    let data;
+    if (API_BASE) {
+      try {
+        const res = await fetchWithTimeout(`${API_BASE}/api/analyze`, { method: 'POST', body: new FormData(e.target) }, API_TIMEOUT);
+        if (res.ok) {
+          data = await res.json();
+        } else if (res.status >= 500) {
+          data = await analyzeOffline(file, company, role, jd);
+          data.notice = 'Using the built-in offline engine because the hosted service is unavailable.';
+        } else {
+          const result = await res.json();
+          throw new Error(result.error || 'Analysis request failed.');
+        }
+      } catch (ex) {
+        if (ex.name !== 'AbortError' && !(ex instanceof TypeError)) throw ex;
+        data = await analyzeOffline(file, company, role, jd);
+        data.notice = 'Using the built-in offline engine because the hosted service is unavailable.';
+      }
+    } else {
+      data = await analyzeOffline(file, company, role, jd);
+    }
     saveHistory(data);
     render(data);
   } catch (ex) {
@@ -126,12 +180,32 @@ function renderMock(d) {
     const q = all[+sel.value]; const fb = $('mqFb'); const btn = $('mqGo');
     btn.disabled = true; btn.textContent = 'Analysing…';
     try {
-      const res = await fetch(`${API_BASE}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q.q, answer: ans.value, type: q.type, skill: q.skill, company: d.job.company, role: d.job.title }) });
-      const r = await res.json();
-      if (!res.ok) throw new Error(r.error || 'Request failed');
+      let r;
+      if (API_BASE) {
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q.q, answer: ans.value, type: q.type, skill: q.skill, company: d.job.company, role: d.job.title }) }, API_TIMEOUT);
+          if (res.ok) {
+            r = await res.json();
+          } else if (res.status >= 500) {
+            r = window.PrepOffline.feedback({ question: q.q, answer: ans.value, type: q.type, skill: q.skill, company: d.job.company, role: d.job.title });
+            r.notice = 'Offline feedback is based on structure and keywords.';
+          } else {
+            const result = await res.json();
+            throw new Error(result.error || 'Feedback request failed.');
+          }
+        } catch (ex) {
+          if (ex.name !== 'AbortError' && !(ex instanceof TypeError)) throw ex;
+          r = window.PrepOffline.feedback({ question: q.q, answer: ans.value, type: q.type, skill: q.skill, company: d.job.company, role: d.job.title });
+          r.notice = 'Offline feedback is based on structure and keywords.';
+        }
+      } else {
+        r = window.PrepOffline.feedback({ question: q.q, answer: ans.value, type: q.type, skill: q.skill, company: d.job.company, role: d.job.title });
+        r.notice = 'Offline feedback is based on structure and keywords.';
+      }
       const cls = r.score >= 75 ? 'good' : r.score >= 50 ? 'mid' : 'bad';
       fb.innerHTML = `<h3>Feedback</h3>
         <div class="big ${cls}">${r.score}<small>/100</small></div><div class="progress"><i style="width:${r.score}%"></i></div>
+        ${r.notice ? `<p class="muted">${esc(r.notice)}</p>` : ''}
         ${r.strengths.length ? `<h3>What worked</h3>${list(r.strengths)}` : ''}
         ${r.improvements.length ? `<h3>Improve</h3>${list(r.improvements)}` : ''}
         ${r.betterAnswer ? `<h3>Model answer</h3><p>${esc(r.betterAnswer)}</p>` : ''}`;
