@@ -38,6 +38,7 @@ if (API_BASE) {
 async function analyzeOffline(file, company, role, jd) {
   const resumeText = (await window.PrepOffline.extractText(file)).replace(/\u0000/g, '').trim();
   if (resumeText.length < 50) throw new Error('Could not read enough text from this resume. Try a text-based PDF or DOCX.');
+  if (!window.PrepOffline.isResumeText(resumeText)) throw new Error('This file does not appear to be a resume. Please upload a resume with sections such as experience, education, skills or projects.');
   const data = window.PrepOffline.generate({ resumeText, company, role, jdText: jd });
   data.ats = window.PrepOffline.checkResume(resumeText, data.match);
   return data;

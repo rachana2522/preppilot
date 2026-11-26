@@ -6,6 +6,7 @@ const { extractText } = require('./lib/parse');
 const { generate } = require('./lib/generate');
 const { checkResume } = require('./lib/ats');
 const { feedback } = require('./lib/feedback');
+const { isResumeText } = require('./public/offline');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -35,6 +36,7 @@ app.post('/api/analyze', upload.single('resume'), async (req, res) => {
 
     const resumeText = (await extractText(req.file)).replace(/\u0000/g, '').trim();
     if (resumeText.length < 50) return res.status(400).json({ error: 'Could not read text from this resume. Try a text-based PDF or DOCX.' });
+    if (!isResumeText(resumeText)) return res.status(400).json({ error: 'This file does not appear to be a resume. Please upload a resume with sections such as experience, education, skills or projects.' });
 
     const result = await generate({ resumeText, company, role: (req.body.role || '').trim(), jdText: (req.body.jd || '').trim() });
     result.ats = checkResume(resumeText, result.match);

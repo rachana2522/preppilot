@@ -15,6 +15,17 @@
   }));
   const detectSkills = (text) => matchers.filter((m) => m.re.test(text)).map((m) => m.skill.name);
 
+  function isResumeText(text) {
+    const indicators = [
+      /\b(?:experience|employment|work history|internships?|career history)\b/i,
+      /\b(?:education|academics?|university|college|bachelors?|masters?|degree|diploma)\b/i,
+      /\b(?:skills|competencies|proficiencies)\b/i,
+      /\b(?:projects?|portfolio)\b/i,
+      /\b(?:certifications?|qualifications|licenses?)\b/i,
+    ];
+    return indicators.filter((pattern) => pattern.test(text)).length >= 2;
+  }
+
   function guessYears(text) {
     const nums = [...text.matchAll(/(\d{1,2})(?:\.\d)?\+?\s*(?:years?|yrs?)/gi)].map((m) => +m[1]).filter((n) => n <= 40);
     return nums.length ? Math.max(...nums) : 0;
@@ -226,5 +237,5 @@
     throw new Error('Unsupported file type. Please use PDF, DOCX or TXT.');
   }
 
-  return { generate, checkResume, feedback, extractText };
+  return { generate, checkResume, feedback, extractText, isResumeText };
 });

@@ -38,4 +38,4 @@ The Pages workflow publishes only the static frontend; it does not expose API se
 
 ## Supported resume formats
 
-PDF, DOCX and TXT (maximum upload size: 5 MB).
+PDF, DOCX and TXT (maximum upload size: 5 MB). Resumes must contain selectable text; scanned PDFs require OCR before upload. A basic keyword check looks for resume sections such as experience, education, skills and projects. It can reject unusual resumes or accept some unrelated documents.
