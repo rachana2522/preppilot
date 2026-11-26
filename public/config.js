@@ -1,2 +1,2 @@
-// Set this to the deployed Node API URL. Leave empty for same-origin local use.
-window.PREP_API_BASE = 'https://preppilot-api.onrender.com';
+// Set this to a deployed Node API URL to enable server and AI mode.
+window.PREP_API_BASE = '';

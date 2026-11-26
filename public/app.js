@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
-const API_BASE = String(window.PREP_API_BASE || '').replace(/\/+$/, '');
+const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const API_BASE = String(window.PREP_API_BASE || (localHost ? window.location.origin : '')).replace(/\/+$/, '');
 const API_TIMEOUT = 3000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const list = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;

@@ -24,7 +24,7 @@ The app has a Node.js API and a static frontend. GitHub Pages cannot run the Nod
 2. Deploy the `preppilot-api` web service. Render will use `render.yaml`.
 3. In the Render service's environment settings, add `OPENAI_API_KEY` if you want AI-generated results. Leave it unset to use offline mode.
 4. Confirm the service health check responds at `/api/status`.
-5. If Render assigns a URL other than `https://preppilot-api.onrender.com`, update `window.PREP_API_BASE` in `public/config.js` to the actual API URL and push the change.
+5. Set `window.PREP_API_BASE` in `public/config.js` to the deployed API URL and push the change to enable server and AI mode. Leave it empty to keep GitHub Pages in browser-only offline mode.
 
 The Render service allows browser requests from `https://rachana2522.github.io`. If the GitHub Pages owner or API URL changes, update `ALLOWED_ORIGINS` in Render and `public/config.js`.
 
