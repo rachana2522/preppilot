@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: preppilot-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: ALLOWED_ORIGINS
+        value: https://rachana2522.github.io
+      - key: OPENAI_API_KEY
+        sync: false

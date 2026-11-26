@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrepPilot – Resume to Interview Prep</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233b82f6'/%3E%3Ctext x='16' y='23' font-size='20' font-weight='800' text-anchor='middle' fill='white' font-family='Arial'%3EP%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span><span class="grid"></span></div>
+
+  <header class="nav">
+    <div class="logo"><span class="logo-mark">P</span>PrepPilot</div>
+    <span id="aiBadge" class="badge"><i></i><b>…</b></span>
+  </header>
+
+  <main>
+    <section id="landing" class="landing">
+      <div class="intro">
+        <span class="pill">✦ Resume → Interview ready</span>
+        <h1>Know exactly what to <span class="grad">prepare</span> before you apply.</h1>
+        <p class="lead">Upload your resume, pick a company and role. Get the job description, your skill gaps, the topics to study and the questions to expect.</p>
+        <ul class="points">
+          <li><i>01</i><div><b>Job description</b><span>Responsibilities and requirements for the role</span></div></li>
+          <li><i>02</i><div><b>Skill-gap match</b><span>See how well your resume fits, and what’s missing</span></div></li>
+          <li><i>03</i><div><b>Questions &amp; 7-day plan</b><span>Technical, behavioural and company-specific</span></div></li>
+        </ul>
+        <div id="history" class="history" hidden>
+          <div class="history-head"><span>Recent preps</span><button id="clearHistory" type="button">Clear</button></div>
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </div>
+
+      <div id="formCard" class="glass form">
+        <form id="form">
+          <label id="drop" class="drop" for="resume">
+            <input id="resume" name="resume" type="file" accept=".pdf,.docx,.txt,.md" hidden />
+            <div class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></div>
+            <div id="dropText"><strong>Drop your resume here</strong><small>or click to browse · PDF, DOCX, TXT · max 5 MB</small></div>
+          </label>
+
+          <div class="row">
+            <div class="field"><label for="company">Company *</label><input id="company" name="company" placeholder="e.g. Google, Infosys, Zomato" required /></div>
+            <div class="field"><label for="role">Target role</label><input id="role" name="role" placeholder="e.g. Frontend Developer" /></div>
+          </div>
+          <div class="field"><label for="jd">Job description <em>optional · paste for better accuracy</em></label><textarea id="jd" name="jd" rows="4" placeholder="Paste the job posting here…"></textarea></div>
+
+          <button id="go" class="btn" type="submit">Generate my prep plan <span>→</span></button>
+          <p id="error" class="error" hidden></p>
+          <p class="privacy">🔒 Processed in memory. Your resume is never stored.</p>
+        </form>
+      </div>
+    </section>
+
+    <section id="loading" class="glass center" hidden>
+      <div class="spinner"></div>
+      <h3>Analysing your resume…</h3>
+      <p class="muted">Building your job description, topics and questions.</p>
+    </section>
+
+    <section id="results" hidden>
+      <div class="glass summary">
+        <div class="sum-text">
+          <span class="pill" id="rCompany"></span>
+          <h2 id="rTitle"></h2>
+          <div class="muted" id="rProfile"></div>
+          <p id="notice" class="notice" hidden></p>
+        </div>
+        <div class="score">
+          <svg viewBox="0 0 120 120">
+            <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs>
+            <circle class="track" cx="60" cy="60" r="52" /><circle id="ring" class="ring" cx="60" cy="60" r="52" />
+          </svg>
+          <div class="score-num"><span><b id="scoreVal">0</b>%</span><small>resume match</small></div>
+        </div>
+      </div>
+
+      <nav class="tabs" id="tabs">
+        <button data-tab="job" class="active">Job description</button>
+        <button data-tab="topics">Topics</button>
+        <button data-tab="questions">Questions</button>
+        <button data-tab="mock">Mock interview</button>
+        <button data-tab="ats">Resume check</button>
+        <button data-tab="rounds">Rounds</button>
+        <button data-tab="plan">7-day plan</button>
+      </nav>
+
+      <div id="tab-job" class="tabpane"></div>
+      <div id="tab-topics" class="tabpane glass" hidden></div>
+      <div id="tab-questions" class="tabpane" hidden></div>
+      <div id="tab-mock" class="tabpane" hidden></div>
+      <div id="tab-ats" class="tabpane" hidden></div>
+      <div id="tab-rounds" class="tabpane glass" hidden></div>
+      <div id="tab-plan" class="tabpane glass" hidden></div>
+
+      <div class="actions">
+        <button class="btn ghost" id="again">← Start over</button>
+        <button class="btn ghost" onclick="window.print()">Save as PDF</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>PrepPilot · built to help students and professionals land their next role</footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
